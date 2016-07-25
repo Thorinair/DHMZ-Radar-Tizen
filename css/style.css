@@ -1,0 +1,12 @@
+body {
+    background-color: #000000; 
+}	
+	
+.ui-page.ui-scroll-on .ui-scroller {
+	overflow-x: hidden;
+	overflow-y: hidden;
+}
+	
+.canvas {
+    background-color: #000000; 
+}	

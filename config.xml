@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://thorinair.com/fivemin" version="1.0.0" height="360" width="360" viewmodes="maximized">
+    <access origin="*" subdomains="true"></access>
+    <tizen:application id="HpmwPDCtI4.DHMZRadar" package="HpmwPDCtI4" required_version="2.3.1"/>
+    <author email="thorinair@gmail.com">Thorinair</author>
+    <content src="index.html"/>
+    <description>Shows a simple zoomable view of the Croatian DHMZ weather radars.</description>
+    <feature name="http://tizen.org/feature/screen.size.normal"/>
+    <feature name="http://tizen.org/feature/network.internet"/>
+    <feature name="http://tizen.org/feature/input.rotating_bezel"/>
+    <feature name="http://tizen.org/feature/screen.shape.circle"/>
+    <icon src="icon.png"/>
+    <name>DHMZ Radar</name>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/download"/>
+    <tizen:profile name="wearable"/>
+    <tizen:setting background-support="disable" encryption="disable" hwkey-event="enable"/>
+</widget>
