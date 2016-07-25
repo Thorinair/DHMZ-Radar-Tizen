@@ -165,7 +165,9 @@ window.onload = function() {
  * Fired when user taps.
  */
 window.onclick = function() {
-	drawRadar();
+	if (loaded) {
+		drawRadar();
+	}
 };
 
 /*
@@ -199,7 +201,9 @@ window.onclick = function() {
     
     document.addEventListener("visibilitychange", function() {
         if (!document.hidden) {
-            drawRadar();
+    		if (loaded) {
+    			drawRadar();
+    		}
         }
     });
     
