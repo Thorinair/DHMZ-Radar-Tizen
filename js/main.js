@@ -49,6 +49,7 @@ var sources = [
 	];
 
 var loaded = false;
+var rec = false;
 var source = 0;
 
 /*
@@ -124,6 +125,7 @@ function drawImage() {
  * Reloads the radar image from web.
  */
 function drawRadar() {
+	
     imageObj = new Image();
 
     imageObj.onload = function() {
@@ -132,15 +134,25 @@ function drawRadar() {
 	    	drawImage();
     		spinner.stop(target);
     		loaded = true;
+    		rec = false;
     	};
 
-    context.save();
-	context.rect(0, 0, canvas.width, canvas.height);
-	context.globalAlpha = 0.5;
-	context.fill();
-	context.restore();
+    if (!rec) {
+	    context.save();
+		context.rect(0, 0, canvas.width, canvas.height);
+		context.globalAlpha = 0.5;
+		context.fill();
+		context.restore();
+		rec = true;
+    }
 	spinner.spin(target);	
         
+	if(window.stop !== undefined) {
+		window.stop();
+	}
+	else if(document.execCommand !== undefined) {
+	 	document.execCommand("Stop", false);
+	}
 	loaded = false;
     imageObj.src = sources[source].src + "?" + new Date().getTime();
 }
@@ -222,6 +234,15 @@ window.onclick = function() {
 					}
 					drawRadar();
 				}
+			}
+			else {
+				source += 1;
+				if (source >= sources.length) {
+					source = 0;
+				}
+	    		resetRadar();
+		    	pixelBlur();
+				drawRadar();
 			}
 		}
 	});
