@@ -33,34 +33,45 @@ var opts = {
 	};
 
 var tim = {
-		sx: 483,
-		sy: 140,
-		sw: 86,
-		sh: 26,
-		dx: 137,
-		dy: 330,
-		dw: 86,
-		dh: 26,
+		sy: 64,
+		sw: 80,
+		sh: 15,
+		dx: 182,
+		dy: 8,
+		dm: 2,
 	};
 
 var sources = [
-		{src: "http://vrijeme.hr/bradar.gif"},
-		{src: "http://vrijeme.hr/oradar.gif"}
+        {src: "https://vrijeme.hr/goli-stat.png",     offset: 171},
+       	{src: "https://vrijeme.hr/debeljak-stat.png", offset: 206},
+		{src: "https://vrijeme.hr/bilogora-stat.png", offset: 202},
+		{src: "https://vrijeme.hr/gradiste-stat.png", offset: 202}
 	];
 
 var loaded = false;
 var rec = false;
-var source = 0;
+var source = 2;
+
+var imgNext = new Image();
+var imgPrev = new Image();
+var imgRefr = new Image();
+var imgBG   = new Image();
+var touched = -1;
+
+var radarX = 1;
+var radarY = 61;
+var radarW = 658;
+var radarH = 658
 
 /*
  * Resets radar values to default.
  */
 function resetRadar() {
 	img = {
-			sx: 1,
-			sy: 1,
-			sw: 478,
-			sh: 478,
+			sx: radarX,
+			sy: radarY,
+			sw: radarW,
+			sh: radarH,
 			dx: 0,
 			dy: 0,
 			dw: 360,
@@ -88,18 +99,18 @@ function pixelBlur() {
  * Prevents out of bounds image.
  */
 function normalizePos() {
-	if (img.sx < 1) {
-		img.sx = 1;
+	if (img.sx < radarX) {
+		img.sx = radarX;
 	}
-	else if (img.sx + img.sw > 478) {
-		img.sx = 478 - img.sw;
+	else if (img.sx + img.sw > radarW) {
+		img.sx = radarW - img.sw;
 	}
 	
-	if (img.sy < 1) {
-		img.sy = 1;
+	if (img.sy < radarY) {
+		img.sy = radarY;
 	}
-	else if (img.sy + img.sh > 478) {
-		img.sy = 478 - img.sh;
+	else if (img.sy + img.sh > radarH) {
+		img.sy = radarH - img.sh;
 	}
 }
 
@@ -107,18 +118,89 @@ function normalizePos() {
  * Clears the canvas and draws the image.
  */
 function drawImage() {
+	// Clear
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Find Time Width
+	context.drawImage(imageObj, sources[source].offset, tim.sy, tim.sw, tim.sh, 0, 0, tim.sw, tim.sh);
+	var imgData = context.getImageData(0, 0, tim.sw, tim.sh);
+	var data = imgData.data;
+	var width = -1;
+	for(var i = (data.length-1) - tim.sw * 4; i < data.length; i += 4) {
+		if (data[i] != 255 || data[i + 1] != 255 || data[i + 2] != 255)
+			break;
+		else
+	    	width++;
+	}
     
+    // Radar
 	context.drawImage(imageObj, img.sx, img.sy, img.sw, img.sh, img.dx, img.dy, img.dw, img.dh);
-	context.beginPath();
-	context.moveTo(135, 328);
-	context.lineTo(225, 328);
-	context.lineTo(235, 360);
-	context.lineTo(125, 360);
-	context.fillStyle = "#000000";
-	context.closePath();
+	
+	// Ellipse
+	context.fillStyle = "#000000";	
+	context.beginPath();	
+	context.ellipse(180, 4, 84, 74, 0, 0, 2*Math.PI);
 	context.fill();
-	context.drawImage(imageObj, tim.sx, tim.sy, tim.sw, tim.sh, tim.dx, tim.dy, tim.dw, tim.dh);
+	
+	var cx = Math.round(tim.dx-((width*tim.dm)/2));
+	
+	// Time
+	context.drawImage(imageObj, sources[source].offset, tim.sy, width, tim.sh, cx, tim.dy, width*tim.dm, tim.sh*tim.dm); //width*tim.dm
+	
+	// Increase contrast of time
+	context.globalCompositeOperation="multiply";
+	context.drawImage(imageObj, sources[source].offset, tim.sy, width, tim.sh, cx, tim.dy, width*tim.dm, tim.sh*tim.dm);
+	context.drawImage(imageObj, sources[source].offset, tim.sy, width, tim.sh, cx, tim.dy, width*tim.dm, tim.sh*tim.dm);
+	context.drawImage(imageObj, sources[source].offset, tim.sy, width, tim.sh, cx, tim.dy, width*tim.dm, tim.sh*tim.dm);
+	context.drawImage(imageObj, sources[source].offset, tim.sy, width, tim.sh, cx, tim.dy, width*tim.dm, tim.sh*tim.dm);
+
+	// Invert colors
+	context.globalCompositeOperation="difference";
+	context.fillStyle="#ffffff";
+	context.fillRect(cx, tim.dy, width*tim.dm, tim.sh*tim.dm);
+
+	// Colored line correction
+	imgData = context.getImageData(135, 8, 90, 1);
+	var data = imgData.data;
+	for(var i = 0; i < data.length; i += 4) {
+		if (data[i] >= 83 && data[i] <= 103 && data[i + 1] >= 65 && data[i + 1] <= 85 && data[i + 2] >= 93 && data[i + 2] <= 113) {
+			data[i] = 0;
+			data[i + 1] = 0;
+			data[i + 2] = 0;
+		}
+	}
+	context.putImageData(imgData, 135, 8);
+	
+	// Icon: Prev
+	context.globalCompositeOperation="source-over";
+	if (source > 0) {
+		if (touched == 0)
+			context.globalAlpha = 0.7;
+		else
+			context.globalAlpha = 1.0;		
+	}
+	else {
+		context.globalAlpha = 0.2;
+	}
+	context.drawImage(imgPrev, 0, 0, 256, 512, 116, 14, 30, 60);
+	// Icon: Next
+	if (source < sources.length - 1) {
+		if (touched == 2)
+			context.globalAlpha = 0.7;
+		else
+			context.globalAlpha = 1.0;	
+	}
+	else {
+		context.globalAlpha = 0.2;
+	}
+	context.drawImage(imgNext, 0, 0, 256, 512, 224, 14, 30, 60);
+	// Icon: Refresh
+	if (touched == 1)
+		context.globalAlpha = 0.7;
+	else
+		context.globalAlpha = 1.0;	
+	context.drawImage(imgRefr, 0, 0, 512, 512, 164, 38, 48, 48);
+	context.globalAlpha = 1.0;	
 }
 
 /*
@@ -129,7 +211,6 @@ function drawRadar() {
     imageObj = new Image();
 
     imageObj.onload = function() {
-    		// draw cropped image   
 	    	pixelBlur();
 	    	drawImage();
     		spinner.stop(target);
@@ -140,12 +221,13 @@ function drawRadar() {
     if (!rec) {
 	    context.save();
 		context.rect(0, 0, canvas.width, canvas.height);
+		context.fillStyle = "#000000";
 		context.globalAlpha = 0.5;
 		context.fill();
 		context.restore();
 		rec = true;
     }
-	spinner.spin(target);	
+	spinner.spin(target);
         
 	if(window.stop !== undefined) {
 		window.stop();
@@ -157,11 +239,23 @@ function drawRadar() {
     imageObj.src = sources[source].src + "?" + new Date().getTime();
 }
 
+function exitApp() {
+	try {
+		tizen.application.getCurrentApplication().exit();
+	} 
+	catch (ignore) {
+	}
+}
+
 /*
  * Fired when application loads.
  */
 window.onload = function() {
-    'use strict';
+    'use strict';    
+    imgNext.src = "./img/angle-right-solid.svg";
+    imgPrev.src = "./img/angle-left-solid.svg";
+    imgRefr.src = "./img/sync-alt-solid.svg";
+    imgBG.src   = "./img/bg.png";
 
     canvas = document.querySelector('canvas');
     context = canvas.getContext('2d');
@@ -169,17 +263,14 @@ window.onload = function() {
     target = document.getElementById('main');
     spinner = new Spinner(opts);
     
-    resetRadar();
-    drawRadar();
-};
-
-/*
- * Fired when user taps.
- */
-window.onclick = function() {
-	if (loaded) {
-		drawRadar();
-	}
+    imgBG.onload = function() {
+    	context.globalAlpha = 0.5;
+    	context.drawImage(imgBG, 0, 0, 360, 360, 0, 0, canvas.width, canvas.height);
+    	context.globalAlpha = 1.0;
+        
+        resetRadar();
+        drawRadar();
+	};
 };
 
 /*
@@ -190,14 +281,74 @@ window.onclick = function() {
     document.addEventListener("pagebeforeshow", function() {
     	tau.event.enableGesture(document, new tau.event.gesture.Drag({}));
 
-    	document.addEventListener("touchstart", function() {
-	    		dragLastX = 0;
-	    		dragLastY = 0;
+    	document.addEventListener("touchstart", function(e) {
+    		var x = e.changedTouches.item(0).screenX;
+    		var y = e.changedTouches.item(0).screenY;
+    		dragLastX = 0;
+    		dragLastY = 0;
+
+			if (loaded) {
+				// Prev
+	    		if (x > 96 && x < 150 && y < 64 && source > 0) {
+	    			touched = 0;
+			    	drawImage();
+	    		}
+	    		// Next
+	    		else if (x > 210 && x < 264 && y < 64 && source < sources.length - 1) {
+	    			touched = 2;
+			    	drawImage();
+	    		}
+	    		// Refresh
+	    		else if (x > 150 && x < 210 && y > 22 && y < 84) {
+	    			touched = 1;
+			    	drawImage();    			
+	    		}
+			}
+    	});
+    	
+    	document.addEventListener("touchend", function(e) {
+    		var x = e.changedTouches.item(0).screenX;
+    		var y = e.changedTouches.item(0).screenY;
+
+			if (loaded) {
+	    		touched = -1;
+				// Prev
+	    		if (x > 96 && x < 150 && y < 64 && source > 0) {
+	    			img.sw = radarW;
+			    	img.sh = radarH;
+			    	img.sx = radarX;
+			    	img.sy = radarY;
+			    	
+					source--;
+		    		resetRadar();
+			    	pixelBlur();
+					drawRadar();
+	    		}
+	    		// Next
+	    		else if (x > 210 && x < 264 && y < 64 && source < sources.length - 1) {
+	    			img.sw = radarW;
+			    	img.sh = radarH;
+			    	img.sx = radarX;
+			    	img.sy = radarY;
+			    	
+					source++;
+		    		resetRadar();
+			    	pixelBlur();
+					drawRadar();
+	    		}
+	    		// Refresh
+	    		else if (x > 150 && x < 210 && y > 22 && y < 84) {
+			    	pixelBlur();
+	    			drawRadar();	    			
+	    		}
+	    		else {
+			    	drawImage();
+	    		}
+			}
     	});
         
         document.addEventListener("drag", function(e) {
-        	
-        	if (img.sw < 478) {
+        	if (img.sw < radarW) {
 	    		var dragX = e.detail.deltaX * (img.sw / 360);
 	    		var dragY = e.detail.deltaY * (img.sh / 360);
 	    		img.sx -= dragX - dragLastX;
@@ -211,6 +362,7 @@ window.onclick = function() {
     	});
     });
     
+    /*
     document.addEventListener("visibilitychange", function() {
         if (!document.hidden) {
     		if (loaded) {
@@ -218,36 +370,27 @@ window.onclick = function() {
     		}
         }
     });
+    */
     
     document.addEventListener("tizenhwkey", function(e) {
-		if (e.keyName == "back") {
+		if (e.keyName == "back") {			
 			if (loaded) {
-				if (img.sw < 478) {
+				if (img.sw < radarW) {
 		    		resetRadar();
 			    	pixelBlur();
 			    	drawImage();
 				}
 				else {
-					source += 1;
-					if (source >= sources.length) {
-						source = 0;
-					}
-					drawRadar();
+					exitApp();
 				}
 			}
 			else {
-				source += 1;
-				if (source >= sources.length) {
-					source = 0;
-				}
-	    		resetRadar();
-		    	pixelBlur();
-				drawRadar();
+				exitApp();
 			}
 		}
 	});
     
-    document.addEventListener( 'rotarydetent', function(e) {
+    document.addEventListener("rotarydetent", function(e) {
 		if (loaded) {
 			var ox, oy;
 	    	/* Get the direction value from the event */
@@ -271,11 +414,11 @@ window.onclick = function() {
 		    	oy = img.sy + img.sh/2;
 		    	img.sw = img.sw / (3/4);
 		    	img.sh = img.sh / (3/4);
-		    	if (img.sw >= 478) {
-			    	img.sw = 478;
-			    	img.sh = 478;
-			    	img.sx = 1;
-			    	img.sy = 1;
+		    	if (img.sw >= radarW) {
+			    	img.sw = radarW;
+			    	img.sh = radarH;
+			    	img.sx = radarX;
+			    	img.sy = radarY;
 		    	}
 		    	else {
 			    	img.sx = ox - img.sw/2;

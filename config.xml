@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://thorinair.com/dhmzradar" version="1.0.0" height="360" width="360" viewmodes="maximized">
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://thorinair.com/dhmzradar" version="1.2.0" height="360" width="360" viewmodes="maximized">
     <access origin="*" subdomains="true"></access>
-    <tizen:application id="HpmwPDCtI4.DHMZRadar" package="HpmwPDCtI4" required_version="2.3.1"/>
+    <tizen:application id="HpmwPDCtI4.DHMZRadar" package="HpmwPDCtI4" required_version="5.5"/>
     <author email="thorinair@gmail.com">Thorinair</author>
     <content src="index.html"/>
     <description>Shows a simple zoomable view of the Croatian DHMZ weather radars.</description>
